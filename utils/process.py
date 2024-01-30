@@ -175,6 +175,36 @@ class Processor(object):
         print('Best epoch is {}'.format(best_epoch))
         return best_epoch
 
+    def computeLevelScore(self, raw_pred_slot, raw_target_slot):
+        real_level_num = 0
+        pred_corret_level_num_1 = 0
+        pred_corret_level_num_2 = 0
+        Level_correct = [[0, 0, 0, 0] , [0, 0, 0, 0]]
+        for i in range (len(raw_target_slot)):
+            for j in range(len(raw_target_slot[i])):
+                realslotlist = raw_target_slot[i][j][2:].split(".")
+                Level_correct[0][len(realslotlist)-1] += 1
+                predslotlist = raw_pred_slot[i][j][2:].split(".")
+                if predslotlist == realslotlist:
+                    pred_corret_level_num_1 += len(realslotlist)
+                    Level_correct[1][len(realslotlist)-1] += 1
+                    pred_corret_level_num_2 += len(realslotlist)
+                else:
+                    for k in range(len(realslotlist)):
+                        try:
+                            if realslotlist[k] == predslotlist[k]:
+                                pred_corret_level_num_2 += 1
+                        except:
+                            break 
+                real_level_num += len(realslotlist)
+        LevelScore_1 = pred_corret_level_num_1/real_level_num
+        LevelScore_2 = pred_corret_level_num_2/real_level_num
+        Level1correct = (Level_correct[1][0]) / (Level_correct[0][0])
+        Level2correct = (Level_correct[1][0] + Level_correct[1][1]) / (Level_correct[0][0] + Level_correct[0][1])
+        Level3correct = (Level_correct[1][0] + Level_correct[1][1] + Level_correct[1][2]) / (Level_correct[0][0] + Level_correct[0][1] + Level_correct[0][2])
+        Level4correct = (Level_correct[1][0] + Level_correct[1][1] + Level_correct[1][2] + Level_correct[1][3]) / (Level_correct[0][0] + Level_correct[0][1] + Level_correct[0][2] + Level_correct[0][3])                                                
+        return LevelScore_1, LevelScore_2, Level1correct, Level2correct, Level3correct, Level4correct
+        
     def estimate(self, if_dev, args, test_batch=100):
         """
         Estimate the performance of model on dev or test dataset.
@@ -187,6 +217,30 @@ class Processor(object):
             ss, pred_slot, real_slot, pred_intent, real_intent = self.prediction(
                 self.__model, self.__dataset, "test", test_batch, args)
 
+        print("\n")
+        for intent_num in [1,2,3]:
+            filtered_indices = [i for i, intent in enumerate(real_intent) if len(intent) == intent_num]
+            sss = [ss[i] for i in filtered_indices]
+            pred_intents = [pred_intent[i] for i in filtered_indices]
+            real_intents = [real_intent[i] for i in filtered_indices]
+            pred_slots = [pred_slot[i] for i in filtered_indices]
+            real_slots = [real_slot[i] for i in filtered_indices]
+
+            num_intent = len(self.__dataset.intent_alphabet)
+            slot_f1_score = miulab.computeF1Score(sss, real_slots, pred_slots, args)[0]
+            intent_f1_score = f1_score(
+                instance2onehot(self.__dataset.intent_alphabet.get_index, num_intent, real_intents),
+                instance2onehot(self.__dataset.intent_alphabet.get_index, num_intent, pred_intents),
+                average='macro')
+            intent_acc_score = Evaluator.intent_acc(pred_intents, real_intents)
+            sent_acc = Evaluator.semantic_acc(pred_slots, real_slots, pred_intents, real_intents)
+            LevelScore_1, LevelScore_2, Level1correct, Level2correct, Level3correct, Level4correct = self.computeLevelScore(pred_slots,
+                                                                                                                            real_slots)
+            print("intent_num :{}, slot f1 :{:.6f}, intent f1 :{:.6f}, intent acc :{:.6f}, exact acc :{:.6f}, LevelScore_1 :{:.6f}, "
+                    "LevelScore_2 :{:.6f}, Level1correct :{:.6f}, Level2correct :{:.6f}, Level3correct :{:.6f}, "
+                "Level4correct :{:.6f}".format(intent_num, slot_f1_score, intent_f1_score, intent_acc_score, sent_acc, 
+                                        LevelScore_1, LevelScore_2, Level1correct, Level2correct, Level3correct, Level4correct))
+            
         num_intent = len(self.__dataset.intent_alphabet)
         slot_f1_score = miulab.computeF1Score(ss, real_slot, pred_slot, args)[0]
         intent_f1_score = f1_score(
@@ -197,6 +251,10 @@ class Processor(object):
         sent_acc = Evaluator.semantic_acc(pred_slot, real_slot, pred_intent, real_intent)
         print("slot f1: {}, intent f1: {}, intent acc: {}, exact acc: {}".format(slot_f1_score, intent_f1_score,
                                                                                  intent_acc_score, sent_acc))
+        LevelScore_1, LevelScore_2, Level1correct, Level2correct, Level3correct,Level4correct = self.computeLevelScore(pred_slot,real_slot)
+        print("LevelScore_1 :{:.6f}, LevelScore_2 :{:.6f}, Level1correct :{:.6f}, Level2correct :{:.6f}, Level3correct :{:.6f}, "
+            "Level4correct :{:.6f}".format(LevelScore_1, LevelScore_2, Level1correct, Level2correct, Level3correct, Level4correct))
+        
         # Write those sample both have intent and slot errors.
         with open(os.path.join(args.save_dir, 'error.txt'), 'w', encoding="utf8") as fw:
             for p_slot_list, r_slot_list, p_intent_list, r_intent in \
