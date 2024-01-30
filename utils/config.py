@@ -10,7 +10,7 @@ parser.add_argument('--save_dir', '-sd', type=str, default='./save/MSATIS')
 parser.add_argument('--load_dir', '-ld', type=str, default=None)
 parser.add_argument('--log_dir', '-lod', type=str, default='./log/MSATIS')
 parser.add_argument('--log_name', '-ln', type=str, default='log.txt')
-parser.add_argument("--random_state", '-rs', help='random seed', type=int, default=3407)
+parser.add_argument("--random_state", '-rs', help='random seed', type=int, default=72)
 parser.add_argument('--gpu', '-g', action='store_true', help='use gpu', required=False, default=False)
 
 # Training parameters.
