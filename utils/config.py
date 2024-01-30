@@ -14,7 +14,7 @@ parser.add_argument("--random_state", '-rs', help='random seed', type=int, defau
 parser.add_argument('--gpu', '-g', action='store_true', help='use gpu', required=False, default=False)
 
 # Training parameters.
-parser.add_argument('--num_epoch', '-ne', type=int, default=5)
+parser.add_argument('--num_epoch', '-ne', type=int, default=50)
 parser.add_argument('--batch_size', '-bs', type=int, default=64)
 parser.add_argument('--l2_penalty', '-lp', type=float, default=1e-6)
 parser.add_argument("--learning_rate", '-lr', type=float, default=0.001)
