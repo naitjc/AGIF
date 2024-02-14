@@ -37,7 +37,7 @@ parser.add_argument("--n_layers_decoder", '-nld', help='GAT layers number of dec
 parser.add_argument('--word_embedding_dim', '-wed', type=int, default=32)
 parser.add_argument('--intent_embedding_dim', '-ied', type=int, default=64)
 parser.add_argument('--slot_embedding_dim', '-sed', type=int, default=32)
-parser.add_argument('--encoder_hidden_dim', '-ehd', type=int, default=256)
+parser.add_argument('--encoder_hidden_dim', '-ehd', type=int, default=384)
 parser.add_argument('--slot_decoder_hidden_dim', '-sdhd', type=int, default=64)
 parser.add_argument('--attention_hidden_dim', '-ahd', type=int, default=2048)
 parser.add_argument('--attention_output_dim', '-aod', type=int, default=128)
